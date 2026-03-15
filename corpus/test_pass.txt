@@ -1,0 +1,15 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.0, pytest-8.1.0, pluggy-1.4.0
+rootdir: /Users/user/Desktop/BrainFog
+configfile: pyproject.toml
+collected 47 items
+
+tests/test_classifier.py ..........                                       [ 21%]
+tests/test_tokenizer.py ...                                               [ 28%]
+tests/test_db.py .......                                                  [ 42%]
+tests/test_metrics.py ....                                                [ 51%]
+tests/test_config.py ...                                                  [ 57%]
+tests/test_pruner.py ................                                     [ 91%]
+tests/test_server.py .....                                                [100%]
+
+============================== 47 passed in 1.89s ==============================

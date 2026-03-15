@@ -1,0 +1,43 @@
+"""
+Volatility classifier.
+
+Determines whether a tool's output is Durable or Volatile.
+"""
+
+from __future__ import annotations
+
+import re
+from dataclasses import dataclass
+from enum import Enum
+
+
+class VolatilityClass(Enum):
+    DURABLE = "durable"
+    VOLATILE = "volatile"
+
+
+@dataclass(frozen=True)
+class ClassificationResult:
+    volatility: VolatilityClass
+    category: str
+    confidence: float
+    reason: str
+
+
+def classify(tool_name: str, command: str, output: str) -> ClassificationResult:
+    """
+    Classify a tool output as Durable or Volatile.
+    """
+    if tool_name in ("Read", "read_file"):
+        return ClassificationResult(
+            volatility=VolatilityClass.DURABLE,
+            category="durable",
+            confidence=1.0,
+            reason="Known-Durable MCP tool",
+        )
+    return ClassificationResult(
+        volatility=VolatilityClass.DURABLE,
+        category="durable",
+        confidence=0.5,
+        reason="Default: Durable",
+    )

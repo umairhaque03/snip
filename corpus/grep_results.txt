@@ -1,0 +1,35 @@
+src/brainfog/classifier.py:12:from brainfog.constants import DURABLE_COMMANDS
+src/brainfog/classifier.py:13:from brainfog.constants import VOLATILE_COMMAND_PREFIXES
+src/brainfog/classifier.py:45:    result = _classify_by_durable_command(command)
+src/brainfog/classifier.py:51:    result = _classify_by_volatile_command(command)
+src/brainfog/classifier.py:89:def _classify_by_durable_command(command: str) -> ClassificationResult | None:
+src/brainfog/pruner.py:8:from brainfog.classifier import ClassificationResult, VolatilityClass
+src/brainfog/pruner.py:55:    should_prune = (
+src/brainfog/pruner.py:56:        classification.volatility == VolatilityClass.VOLATILE
+src/brainfog/pruner.py:78:    category=classification.category,
+src/brainfog/server.py:21:from brainfog.classifier import classify
+src/brainfog/server.py:65:    classification = classify(tool_name="Bash", command=command, output=combined)
+src/brainfog/server.py:70:    result = prune(combined, log_id, classification)
+src/brainfog/cli.py:44:    from brainfog.classifier import classify
+src/brainfog/cli.py:45:    from brainfog.pruner import prune
+tests/test_classifier.py:5:from brainfog.classifier import classify, ClassificationResult, VolatilityClass
+tests/test_classifier.py:12:def test_ls_is_volatile():
+tests/test_classifier.py:15:    assert result.volatility == VolatilityClass.VOLATILE
+tests/test_classifier.py:18:def test_cat_is_durable():
+tests/test_classifier.py:21:    assert result.volatility == VolatilityClass.DURABLE
+tests/test_classifier.py:25:def test_grep_is_volatile():
+tests/test_classifier.py:29:    assert result.volatility == VolatilityClass.VOLATILE
+tests/test_pruner.py:5:from brainfog.pruner import prune, PrunedResult
+tests/test_pruner.py:8:from brainfog.classifier import ClassificationResult, VolatilityClass
+tests/test_pruner.py:22:def test_durable_passes_through():
+tests/test_pruner.py:25:    classification = ClassificationResult(VolatilityClass.DURABLE, "durable", 1.0, "test")
+tests/test_pruner.py:26:    result = prune(short_output, "test-id", classification)
+tests/test_pruner.py:27:    assert result.was_pruned is False
+tests/test_pruner.py:30:def test_volatile_long_output_is_pruned():
+tests/test_pruner.py:34:    classification = ClassificationResult(VolatilityClass.VOLATILE, "directory_listing", 0.95, "test")
+tests/test_pruner.py:35:    result = prune(output, "test-id", classification)
+tests/test_pruner.py:36:    assert result.was_pruned is True
+tests/test_pruner.py:37:    assert result.tokens_saved > 0
+docs/architecture.md:15:The classifier module exposes a single public function: classify()
+docs/architecture.md:22:Classification is pure — it has no side effects and can be tested in isolation
+docs/architecture.md:35:Pruning only triggers when: volatility == VOLATILE and line_count > 50
