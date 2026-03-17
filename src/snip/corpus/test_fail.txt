@@ -2,15 +2,18 @@
 platform darwin -- Python 3.12.0, pytest-8.1.0, pluggy-1.4.0
 rootdir: /Users/user/Desktop/snip
 configfile: pyproject.toml
-collected 47 items
+collected 89 items
 
-tests/test_classifier.py ..........                                       [ 21%]
-tests/test_tokenizer.py ...                                               [ 28%]
-tests/test_db.py .......                                                  [ 42%]
-tests/test_metrics.py ....                                                [ 51%]
-tests/test_config.py ...                                                  [ 57%]
-tests/test_pruner.py .....F....F.....                                     [ 91%]
-tests/test_server.py ..F..                                                [100%]
+tests/test_classifier.py ..........                                       [ 11%]
+tests/test_tokenizer.py ...                                               [ 14%]
+tests/test_db.py .......                                                  [ 22%]
+tests/test_metrics.py ....                                                [ 27%]
+tests/test_config.py ...                                                  [ 30%]
+tests/test_pruner.py .....F....F.....F..                                  [ 51%]
+tests/test_server.py ..F..F                                               [ 57%]
+tests/test_benchmark.py ..F....F..                                        [ 78%]
+tests/test_dashboard.py ....                                              [ 82%]
+tests/test_integration.py F....F...F..                                    [100%]
 
 =================================== FAILURES ===================================
 _______________ test_prune_directory_listing_shows_extensions ________________
@@ -18,14 +21,20 @@ _______________ test_prune_directory_listing_shows_extensions ________________
 tests/test_pruner.py:89: in test_prune_directory_listing_shows_extensions
     assert ".py" in result.pruned_output
 E   AssertionError: assert ".py" in "[snip] Directory listing: 80 entries\n[Pruned from..."
-E   +  where "[snip] Directory listing: 80 entries\n[Pruned from..." = PrunedResult(log_id='abc123', ...).pruned_output
+E   +  where "[snip] Directory listing: 80 entries\n..." = PrunedResult(...).pruned_output
 
 _______________ test_prune_test_output_extracts_failures ______________________
 
 tests/test_pruner.py:134: in test_prune_test_output_extracts_failures
     assert "test_auth_login" in result.pruned_output
-E   AssertionError: assert "test_auth_login" in "[snip] Test results: 3 failed\n[Pruned from..."
-E   +  where "[snip] Test results: 3 failed\n[Pruned from..." = PrunedResult(log_id='def456', ...).pruned_output
+E   AssertionError: assert "test_auth_login" in "[snip] Test results: 3 failed\n..."
+
+_______________ test_prune_install_log_shows_package_count ___________________
+
+tests/test_pruner.py:178: in test_prune_install_log_shows_package_count
+    assert result.pruned_output.startswith("[snip] Install: SUCCESS")
+E   AssertionError: assert "[snip] Install: UNKNOWN" starts with "[snip] Install: SUCCESS"
+E   +  where "[snip] Install: UNKNOWN — 0 packages\n..." = PrunedResult(...).pruned_output
 
 _______________ test_handle_intercept_stores_log ______________________________
 
@@ -34,8 +43,54 @@ tests/test_server.py:67: in test_handle_intercept_stores_log
 E   AssertionError: assert None is not None
 E   (the raw log was not persisted to the database)
 
+_______________ test_handle_intercept_returns_pruned_for_volatile ____________
+
+tests/test_server.py:98: in test_handle_intercept_returns_pruned_for_volatile
+    assert "[snip]" in response.content[0].text
+E   AssertionError: "[snip]" not found in response content
+
+_______________ test_benchmark_all_corpus_files_processed ____________________
+
+tests/test_benchmark.py:45: in test_benchmark_all_corpus_files_processed
+    assert len(rows) == expected_file_count
+E   AssertionError: assert 8 == 9
+E   +  where 8 = len([{'category': 'directory_listing', ...}, ...])
+
+_______________ test_benchmark_report_contains_totals ________________________
+
+tests/test_benchmark.py:89: in test_benchmark_report_contains_totals
+    assert "TOTAL" in report_content
+E   AssertionError: assert "TOTAL" in "# snip Benchmark Results\n..."
+
+_______________ test_integration_volatile_output_is_pruned ___________________
+
+tests/test_integration.py:34: in test_integration_volatile_output_is_pruned
+    assert result.was_pruned is True
+E   AssertionError: assert False is True
+E   +  where False = PrunedResult(log_id='...', was_pruned=False, ...).was_pruned
+
+_______________ test_integration_durable_output_passthrough __________________
+
+tests/test_integration.py:78: in test_integration_durable_output_passthrough
+    assert result.pruned_output == result.raw_output
+E   AssertionError: pruned_output was modified for durable classification
+
+_______________ test_integration_session_stats_accumulate ____________________
+
+tests/test_integration.py:112: in test_integration_session_stats_accumulate
+    assert stats.total_tokens_saved > 0
+E   AssertionError: assert 0 > 0
+E   +  where 0 = SessionStats(total_tokens_saved=0, ...).total_tokens_saved
+
 =================================== short test summary info ====================
-FAILED tests/test_pruner.py::test_prune_directory_listing_shows_extensions - AssertionError
-FAILED tests/test_pruner.py::test_prune_test_output_extracts_failures - AssertionError
-FAILED tests/test_server.py::test_handle_intercept_stores_log - AssertionError
-3 failed, 44 passed, 0 warnings in 2.34s
+FAILED tests/test_pruner.py::test_prune_directory_listing_shows_extensions
+FAILED tests/test_pruner.py::test_prune_test_output_extracts_failures
+FAILED tests/test_pruner.py::test_prune_install_log_shows_package_count
+FAILED tests/test_server.py::test_handle_intercept_stores_log
+FAILED tests/test_server.py::test_handle_intercept_returns_pruned_for_volatile
+FAILED tests/test_benchmark.py::test_benchmark_all_corpus_files_processed
+FAILED tests/test_benchmark.py::test_benchmark_report_contains_totals
+FAILED tests/test_integration.py::test_integration_volatile_output_is_pruned
+FAILED tests/test_integration.py::test_integration_durable_output_passthrough
+FAILED tests/test_integration.py::test_integration_session_stats_accumulate
+10 failed, 79 passed, 0 warnings in 4.12s

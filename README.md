@@ -7,6 +7,28 @@
 
 ---
 
+## 80.6% fewer tokens. Nothing lost.
+
+snip benchmarks at **80.6% overall token reduction** across real shell output types — directory listings, installs, test runs, build logs, and more. The full raw output is always stored locally and retrievable by ID.
+
+| Output Type | Raw Tokens | After snip | Savings |
+|---|---:|---:|---:|
+| pytest (passing) | 1,836 | 52 | **97.2%** |
+| pip install | 2,030 | 110 | **94.6%** |
+| ls -la (large dir) | 2,277 | 124 | **94.6%** |
+| webpack build (success) | 761 | 60 | **92.1%** |
+| webpack build (failure) | 1,056 | 295 | **72.1%** |
+| pytest (with failures) | 1,073 | 229 | **78.7%** |
+| grep results | 1,062 | 313 | **70.5%** |
+| git log | 1,442 | 874 | **39.4%** |
+| file read (source code) | 223 | 223 | **0% — preserved** |
+
+Durable outputs like source code reads are never pruned. Only noisy, repetitive outputs get compressed.
+
+> Run `snip benchmark` yourself — results are generated fresh from the included corpus.
+
+---
+
 ## Why snip Exists
 
 AI coding agents like Claude Code run shell commands constantly — `ls`, `pip install`, `pytest`, `git log`. Many of these produce large, repetitive outputs that consume thousands of tokens per session without adding information.
@@ -36,11 +58,31 @@ Agent → snip_run(command) → Execute command
                              → Return digest + retrieval ID to agent
 ```
 
-**Durable output** (errors, stack traces, compiler output, meaningful results) is returned as-is. Nothing is lost.
+**Durable output** (source code, errors, stack traces, compiler output, meaningful results) is returned as-is. Nothing is lost.
 
 **Volatile output** (directory listings, install logs, progress bars, repetitive output) beyond the line threshold is summarized into a compact digest. The agent gets the shape of the result without the token cost.
 
 **Full raw output** is always stored locally at `~/.snip/snip.db`. The agent can retrieve it by ID at any time using `get_raw_output`.
+
+### What a digest looks like
+
+Before (pip install — 2,030 tokens):
+```
+Collecting mcp>=1.0.0
+  Downloading mcp-1.4.1-py3-none-any.whl (75 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 75.2/75.2 kB 2.1 MB/s eta 0:00:00
+Collecting click>=8.1.0
+  Downloading click-8.1.7-py3-none-any.whl (97 kB)
+... [60+ more lines of download progress]
+Successfully installed aiosqlite-0.20.0 anyio-4.3.0 certifi-2024.2.2 ...
+```
+
+After (110 tokens):
+```
+[snip] Install: SUCCESS — 29 packages
+Key packages: aiosqlite-0.20.0, anyio-4.3.0, snip-0.1.0, certifi-2024.2.2, ... (24 more)
+[Pruned from 75 lines. Use get_raw_output(id='...') for full output]
+```
 
 ---
 
@@ -94,6 +136,41 @@ These tools are exposed to Claude Code through the MCP protocol. You do not call
 
 ---
 
+## Benchmark
+
+Run snip against the included corpus of representative shell outputs:
+
+```bash
+snip benchmark
+```
+
+Save results to a file:
+
+```bash
+snip benchmark --output results.md
+```
+
+The corpus covers 9 real output types across 7 pruning categories. Results from the current corpus:
+
+| File | Category | Raw Tokens | Pruned Tokens | Tokens Saved | % Reduction |
+| --- | --- | ---: | ---: | ---: | ---: |
+| ls_large.txt ✓ | directory_listing | 2,277 | 124 | 2,153 | 94.6% |
+| pip_install.txt ✓ | install_log | 2,030 | 110 | 1,920 | 94.6% |
+| test_pass.txt ✓ | test_output | 1,836 | 52 | 1,784 | 97.2% |
+| test_fail.txt ✓ | test_output | 1,073 | 229 | 844 | 78.7% |
+| build_log_fail.txt ✓ | build_log | 1,056 | 295 | 761 | 72.1% |
+| grep_results.txt ✓ | grep_results | 1,062 | 313 | 749 | 70.5% |
+| build_log_success.txt ✓ | build_log | 761 | 60 | 701 | 92.1% |
+| git_log.txt ✓ | git_output | 1,442 | 874 | 568 | 39.4% |
+| file_read_python.txt | durable | 223 | 223 | 0 | 0.0% |
+| **TOTAL** | — | **11,760** | **2,280** | **9,480** | **80.6%** |
+
+`file_read_python.txt` shows 0% reduction by design — source code is classified as Durable and always returned in full.
+
+See [`benchmark_results.md`](benchmark_results.md) for the full report.
+
+---
+
 ## Why Use snip
 
 - Reduces token consumption per session on large shell outputs
@@ -102,34 +179,6 @@ These tools are exposed to Claude Code through the MCP protocol. You do not call
 - Useful for `ls`, `find`, `pip install`, `pytest`, `git log`, and similar noisy commands
 - Lightweight local setup — SQLite only, no network dependencies
 - Improves signal-to-noise ratio in long agentic sessions
-
----
-
-## Benchmark
-
-The benchmark runs snip against a corpus of real shell output samples and reports token savings per output type.
-
-```bash
-snip benchmark
-```
-
-To save results to a file:
-
-```bash
-snip benchmark --output results.md
-```
-
-Sample output (from included corpus):
-
-| Command Type | Raw Tokens | Pruned Tokens | Savings |
-|---|---|---|---|
-| pip install | ~800 | ~80 | 90% |
-| ls -la (large dir) | ~600 | ~40 | 93% |
-| git log | ~1200 | ~100 | 92% |
-| pytest (passing) | ~400 | ~60 | 85% |
-| compiler error | ~150 | ~150 | 0% (durable) |
-
-Durable outputs are never pruned. Volatile outputs are pruned only when they exceed the line threshold.
 
 ---
 

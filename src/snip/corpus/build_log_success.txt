@@ -1,9 +1,52 @@
 
-> snip@0.1.0 build
-> tsc --noEmit && vite build
+> snip@0.2.0 build
+> tsc --noEmit && webpack --config webpack.config.js
 
-vite v5.2.0 building for production...
-✓ 23 modules transformed.
-dist/snip.js    42.31 kB │ gzip: 14.82 kB
-dist/snip.umd.cjs    28.14 kB │ gzip: 10.34 kB
-✓ built in 1.23s
+[webpack-cli] Compilation starting...
+[webpack-cli] Reading configuration file: webpack.config.js
+asset main.js 2.38 MiB [emitted] [minimized] (name: main)
+asset vendor.js 1.21 MiB [emitted] [minimized] (name: vendor)
+asset main.js.map 4.12 MiB [emitted] [dev] (name: main) 1 related asset
+asset vendor.js.map 2.34 MiB [emitted] [dev] (name: vendor) 1 related asset
+orphan modules 456 bytes [orphan] 4 modules
+runtime modules 1.25 KiB 6 modules
+cacheable modules 3.12 MiB
+  modules by path ./src/ 1.45 MiB
+    modules by path ./src/snip/ 934 KiB
+      ./src/snip/server.ts 78.2 KiB [built] [code generated]
+      ./src/snip/classifier.ts 54.1 KiB [built] [code generated]
+      ./src/snip/pruner.ts 67.8 KiB [built] [code generated]
+      ./src/snip/db.ts 45.3 KiB [built] [code generated]
+      ./src/snip/config.ts 32.1 KiB [built] [code generated]
+      ./src/snip/tokenizer.ts 12.4 KiB [built] [code generated]
+      ./src/snip/metrics.ts 8.9 KiB [built] [code generated]
+      ./src/snip/dashboard.ts 41.2 KiB [built] [code generated]
+      ./src/snip/constants.ts 15.6 KiB [built] [code generated]
+      ./src/snip/cli.ts 89.4 KiB [built] [code generated]
+    modules by path ./src/tests/ 523 KiB 34 modules [built] [code generated]
+  modules by path ./node_modules/ 1.67 MiB
+    ./node_modules/@modelcontextprotocol/sdk/dist/index.js 312 KiB [built] [code generated]
+    ./node_modules/tiktoken/dist/index.js 256 KiB [built] [code generated]
+    ./node_modules/better-sqlite3/lib/index.js 134 KiB [built] [code generated]
+    ./node_modules/commander/index.js 67.4 KiB [built] [code generated]
+    ./node_modules/chalk/source/index.js 23.1 KiB [built] [code generated]
+    ./node_modules/uuid/dist/cjs/index.js 18.4 KiB [built] [code generated]
+    + 83 more modules
+  modules by path ./src/snip/corpus/ 312 bytes [built] [code generated]
+
+LOG from webpack.DefinePlugin
+<i> [webpack.DefinePlugin] Replacing "process.env.NODE_ENV" with "production"
+
+LOG from webpack.optimize.ModuleConcatenationPlugin
+<i> ModuleConcatenationPlugin: 124 modules concatenated
+
+LOG from webpack-sources (webpack/lib/NormalModule)
+<i> 12 modules used tree shaking optimization
+
+webpack 5.91.0 compiled successfully in 6891ms
+Build output:
+  dist/main.js         2.38 MiB
+  dist/vendor.js       1.21 MiB
+  dist/main.js.map     4.12 MiB
+  dist/vendor.js.map   2.34 MiB
+Done in 7.23s

@@ -1,21 +1,93 @@
 
-> snip@0.1.0 build
-> tsc --noEmit && vite build
+> snip@0.2.0 build
+> tsc --noEmit && webpack --config webpack.config.js
 
-src/snip/server.ts(12,3): error TS2304: Cannot find name 'Server'.
-src/snip/server.ts(45,21): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
-src/snip/server.ts(78,5): error TS2307: Cannot find module '@anthropic-ai/sdk' or its corresponding type declarations.
-src/snip/classifier.ts(23,10): error TS2339: Property 'volatility' does not exist on type 'ClassificationResult'.
-src/snip/pruner.ts(56,7): error TS7006: Parameter 'lines' implicitly has an 'any' type.
-src/snip/db.ts(99,17): error TS2322: Type 'string | null' is not assignable to type 'string'.
-src/snip/cli.ts(14,3): warning TS6133: 'console' is declared but its value is never read.
-src/snip/cli.ts(88,5): warning TS2532: Object is possibly 'undefined'.
-src/snip/dashboard.ts(34,9): warning TS6133: 'Layout' is declared but its value is never read.
-src/snip/dashboard.ts(112,22): warning TS2532: Object is possibly 'undefined'.
-src/snip/config.ts(7,1): warning TS6133: 'fs' is declared but its value is never read.
-src/snip/tokenizer.ts(3,8): warning TS6133: 'Tiktoken' is declared but its value is never read.
-src/snip/metrics.ts(1,1): warning TS6133: 'uuid' is declared but its value is never read.
+[webpack-cli] Compilation starting...
+[webpack-cli] Reading configuration file: webpack.config.js
+asset main.js 2.41 MiB [emitted] [minimized] (name: main)
+asset vendor.js 1.23 MiB [emitted] [minimized] (name: vendor)
+orphan modules 456 bytes [orphan] 4 modules
+runtime modules 1.25 KiB 6 modules
+cacheable modules 3.12 MiB
+  modules by path ./src/ 1.45 MiB
+    modules by path ./src/snip/ 934 KiB
+      ./src/snip/server.ts 78.2 KiB [built] [code generated]
+      ./src/snip/classifier.ts 54.1 KiB [built] [code generated]
+      ./src/snip/pruner.ts 67.8 KiB [built] [code generated]
+      ./src/snip/db.ts 45.3 KiB [built] [code generated]
+      ./src/snip/config.ts 32.1 KiB [built] [code generated]
+      ./src/snip/tokenizer.ts 12.4 KiB [built] [code generated]
+      ./src/snip/metrics.ts 8.9 KiB [built] [code generated]
+      ./src/snip/dashboard.ts 41.2 KiB [built] [code generated]
+      ./src/snip/constants.ts 15.6 KiB [built] [code generated]
+      ./src/snip/cli.ts 89.4 KiB [built] [code generated]
+    modules by path ./src/tests/ 523 KiB 34 modules [built] [code generated]
+  modules by path ./node_modules/ 1.67 MiB
+    ./node_modules/@modelcontextprotocol/sdk/dist/index.js 312 KiB
+    ./node_modules/tiktoken/dist/index.js 256 KiB
+    ./node_modules/better-sqlite3/lib/index.js 134 KiB
+    ./node_modules/commander/index.js 67.4 KiB
+    + 89 more modules
 
-Found 6 errors and 7 warnings.
+ERROR in ./src/snip/server.ts
+  TS2304: Cannot find name 'Server'.
+  at line 12, column 3
+
+ERROR in ./src/snip/server.ts
+  TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  at line 45, column 21
+
+ERROR in ./src/snip/server.ts
+  TS2307: Cannot find module '@anthropic-ai/sdk' or its corresponding type declarations.
+  at line 78, column 5
+
+ERROR in ./src/snip/classifier.ts
+  TS2339: Property 'volatility' does not exist on type 'ClassificationResult'.
+  at line 23, column 10
+
+ERROR in ./src/snip/pruner.ts
+  TS7006: Parameter 'lines' implicitly has an 'any' type.
+  at line 56, column 7
+
+ERROR in ./src/snip/db.ts
+  TS2322: Type 'string | null' is not assignable to type 'string'.
+  at line 99, column 17
+
+warning in ./src/snip/cli.ts
+  TS6133: 'console' is declared but its value is never read.
+  at line 14, column 3
+
+warning in ./src/snip/cli.ts
+  TS2532: Object is possibly 'undefined'.
+  at line 88, column 5
+
+warning in ./src/snip/dashboard.ts
+  TS6133: 'Layout' is declared but its value is never read.
+  at line 34, column 9
+
+warning in ./src/snip/dashboard.ts
+  TS2532: Object is possibly 'undefined'.
+  at line 112, column 22
+
+warning in ./src/snip/config.ts
+  TS6133: 'fs' is declared but its value is never read.
+  at line 7, column 1
+
+warning in ./src/snip/tokenizer.ts
+  TS6133: 'Tiktoken' is declared but its value is never read.
+  at line 3, column 8
+
+warning in ./src/snip/metrics.ts
+  TS6133: 'uuid' is declared but its value is never read.
+  at line 1, column 1
+
+webpack 5.91.0 compiled with 6 errors and 7 warnings in 8234ms
 
 error: TypeScript compilation failed with 6 errors
+npm error code ELIFECYCLE
+npm error errno 1
+npm error snip@0.2.0 build: `tsc --noEmit && webpack --config webpack.config.js`
+npm error Exit status 1
+npm error
+npm error Failed at the snip@0.2.0 build script.
+npm error This is probably not a problem with npm. There is likely additional logging output above.
