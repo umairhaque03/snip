@@ -1,5 +1,9 @@
 # snip
 
+[![PyPI version](https://img.shields.io/pypi/v/snip.svg)](https://pypi.org/project/snip/)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
 **snip reduces context bloat in agentic coding workflows by classifying shell output, pruning verbose noise into compact digests, and preserving full raw logs for later retrieval.**
 
 ---
@@ -41,57 +45,33 @@ Agent → snip_run(command) → Execute command
 
 ---
 
-## Why Use snip
-
-- Reduces token consumption per session on large shell outputs
-- Preserves full access to raw logs — nothing is lost, just summarized
-- Works passively — no changes to your workflow once configured
-- Useful for `ls`, `find`, `pip install`, `pytest`, `git log`, and similar noisy commands
-- Lightweight local setup — SQLite only, no network dependencies
-- Improves signal-to-noise ratio in long agentic sessions
-
----
-
 ## Installation
 
-**Requirements:** Python 3.11+, Claude Code
+> **Requirements:** Python 3.11+, Claude Code
+
+**Step 1 — Install snip:**
 
 ```bash
 pip install snip
 ```
 
-Then register snip as an MCP server in your Claude Code config:
+**Step 2 — Register with Claude Code:**
 
 ```bash
 snip init
 ```
 
-`snip init` writes an entry into `~/.claude.json` under `mcpServers`. It registers the `snip` server so that Claude Code can use the snip tools automatically. If a legacy `brainfog` entry exists, it is removed automatically.
+**Step 3 — Restart Claude Code.**
 
-After running `init`, restart Claude Code. snip will be active on your next session.
+That's it. You're done. snip is now active on every session automatically — no further setup required.
 
 ---
 
-## Quickstart
+### What `snip init` does
 
-```bash
-# Install
-pip install snip
+`snip init` writes a single entry into `~/.claude.json` under `mcpServers`. Claude Code reads this file on startup and launches the snip server automatically each time. You never need to start it manually.
 
-# Register with Claude Code
-snip init
-
-# Restart Claude Code, then use it — snip is now active
-
-# Verify it's working (start the MCP server manually)
-snip serve
-
-# Run the benchmark against the included corpus
-snip benchmark
-
-# Check what version is installed
-snip --version
-```
+If you previously installed an older version under the name `brainfog` or `ctxsift`, `snip init` removes those entries automatically.
 
 ---
 
@@ -115,15 +95,14 @@ These tools are exposed to Claude Code through the MCP protocol. You do not call
 
 ---
 
-## Technologies
+## Why Use snip
 
-- **Python 3.11+** — runtime
-- **MCP SDK** (`mcp`) — Model Context Protocol server implementation
-- **SQLite + aiosqlite** — local storage for raw output logs
-- **tiktoken** — token counting for context cost estimation
-- **Click** — CLI framework
-- **Rich** — terminal output formatting
-- **Rule-based classifier** — heuristic patterns determine Durable vs Volatile output type
+- Reduces token consumption per session on large shell outputs
+- Preserves full access to raw logs — nothing is lost, just summarized
+- Works passively — no changes to your workflow once configured
+- Useful for `ls`, `find`, `pip install`, `pytest`, `git log`, and similar noisy commands
+- Lightweight local setup — SQLite only, no network dependencies
+- Improves signal-to-noise ratio in long agentic sessions
 
 ---
 
@@ -155,11 +134,33 @@ Durable outputs are never pruned. Volatile outputs are pruned only when they exc
 
 ---
 
+## Other Commands
+
+```bash
+snip status          # Show recent snip activity from the database
+snip serve           # Start the MCP server manually (for debugging)
+snip --version       # Check installed version
+```
+
+---
+
+## Technologies
+
+- **Python 3.11+** — runtime
+- **MCP SDK** (`mcp`) — Model Context Protocol server implementation
+- **SQLite + aiosqlite** — local storage for raw output logs
+- **tiktoken** — token counting for context cost estimation
+- **Click** — CLI framework
+- **Rich** — terminal output formatting
+- **Rule-based classifier** — heuristic patterns determine Durable vs Volatile output type
+
+---
+
 ## Development
 
 ```bash
 # Clone and install in editable mode with dev dependencies
-git clone https://github.com/snip/snip
+git clone https://github.com/umairhaque03/snip
 cd snip
 pip install -e ".[dev]"
 
@@ -181,9 +182,9 @@ snip serve
 Tests require no external services. SQLite databases are created in temp directories and cleaned up automatically.
 
 ```bash
-pytest                    # Run all tests
-pytest tests/test_pruner.py  # Run a specific module
-pytest --cov --cov-report=term-missing  # With coverage detail
+pytest                                         # Run all tests
+pytest tests/test_pruner.py                   # Run a specific module
+pytest --cov --cov-report=term-missing        # With coverage detail
 ```
 
 ### Inspecting stored output
@@ -210,8 +211,8 @@ snip/
 │   ├── dashboard.py     # Live session stats display
 │   ├── metrics.py       # Per-call token metrics
 │   ├── tokenizer.py     # Token counting via tiktoken
-│   └── constants.py     # Thresholds, patterns, config paths
-├── corpus/              # Sample shell outputs for benchmarking
+│   ├── constants.py     # Thresholds, patterns, config paths
+│   └── corpus/          # Sample shell outputs for benchmarking
 ├── tests/               # Pytest test suite
 └── docs/
     └── architecture.md  # System design and data flow

@@ -1,0 +1,41 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.0, pytest-8.1.0, pluggy-1.4.0
+rootdir: /Users/user/Desktop/snip
+configfile: pyproject.toml
+collected 47 items
+
+tests/test_classifier.py ..........                                       [ 21%]
+tests/test_tokenizer.py ...                                               [ 28%]
+tests/test_db.py .......                                                  [ 42%]
+tests/test_metrics.py ....                                                [ 51%]
+tests/test_config.py ...                                                  [ 57%]
+tests/test_pruner.py .....F....F.....                                     [ 91%]
+tests/test_server.py ..F..                                                [100%]
+
+=================================== FAILURES ===================================
+_______________ test_prune_directory_listing_shows_extensions ________________
+
+tests/test_pruner.py:89: in test_prune_directory_listing_shows_extensions
+    assert ".py" in result.pruned_output
+E   AssertionError: assert ".py" in "[snip] Directory listing: 80 entries\n[Pruned from..."
+E   +  where "[snip] Directory listing: 80 entries\n[Pruned from..." = PrunedResult(log_id='abc123', ...).pruned_output
+
+_______________ test_prune_test_output_extracts_failures ______________________
+
+tests/test_pruner.py:134: in test_prune_test_output_extracts_failures
+    assert "test_auth_login" in result.pruned_output
+E   AssertionError: assert "test_auth_login" in "[snip] Test results: 3 failed\n[Pruned from..."
+E   +  where "[snip] Test results: 3 failed\n[Pruned from..." = PrunedResult(log_id='def456', ...).pruned_output
+
+_______________ test_handle_intercept_stores_log ______________________________
+
+tests/test_server.py:67: in test_handle_intercept_stores_log
+    assert stored_entry is not None
+E   AssertionError: assert None is not None
+E   (the raw log was not persisted to the database)
+
+=================================== short test summary info ====================
+FAILED tests/test_pruner.py::test_prune_directory_listing_shows_extensions - AssertionError
+FAILED tests/test_pruner.py::test_prune_test_output_extracts_failures - AssertionError
+FAILED tests/test_server.py::test_handle_intercept_stores_log - AssertionError
+3 failed, 44 passed, 0 warnings in 2.34s

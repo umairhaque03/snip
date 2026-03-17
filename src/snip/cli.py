@@ -238,7 +238,7 @@ def benchmark(output: Path, corpus: Path | None) -> None:
     from snip.db import RawLogEntry
     from snip.pruner import prune
 
-    corpus_dir = corpus or (Path(__file__).parent.parent.parent / "corpus")
+    corpus_dir = corpus or (Path(__file__).parent / "corpus")
 
     corpus_files = sorted(corpus_dir.glob("*.txt"))
     if not corpus_files:

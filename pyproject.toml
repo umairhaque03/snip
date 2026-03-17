@@ -10,11 +10,11 @@ readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.11"
 authors = [
-    { name = "snip Contributors" },
+    { name = "Umair Haque" },
 ]
-keywords = ["mcp", "claude", "token-optimization", "ai-tools", "context-pruning"]
+keywords = ["mcp", "claude", "token-optimization", "ai-tools", "context-pruning", "claude-code", "mcp-server"]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
@@ -22,6 +22,8 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Topic :: Software Development :: Libraries",
+    "Topic :: Utilities",
+    "Environment :: Console",
 ]
 dependencies = [
     "mcp>=1.0.0",
@@ -44,9 +46,9 @@ dev = [
 snip = "snip.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/snip/snip"
-Repository = "https://github.com/snip/snip"
-Issues = "https://github.com/snip/snip/issues"
+Homepage = "https://github.com/umairhaque03/snip"
+Repository = "https://github.com/umairhaque03/snip"
+Issues = "https://github.com/umairhaque03/snip/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/snip"]

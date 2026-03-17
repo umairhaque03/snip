@@ -20,6 +20,9 @@ env/
 .env.*
 *.env
 
+# Claude Code project config (local only)
+.claude/
+
 # Runtime app state should never be committed.
 .snip/
 **/.snip/
