@@ -106,13 +106,23 @@ snip init
 
 That's it. You're done. snip is now active on every session automatically — no further setup required.
 
----
-
-### What `snip init` does
+<details>
+<summary>What <code>snip init</code> does under the hood</summary>
 
 `snip init` writes a single entry into `~/.claude.json` under `mcpServers`. Claude Code reads this file on startup and launches the snip server automatically each time. You never need to start it manually.
 
 If you previously installed an older version under the name `brainfog` or `ctxsift`, `snip init` removes those entries automatically.
+</details>
+
+---
+
+## Other Commands
+
+```bash
+snip status          # Show recent snip activity from the database
+snip serve           # Start the MCP server manually (for debugging)
+snip --version       # Check installed version
+```
 
 ---
 
@@ -150,23 +160,6 @@ Save results to a file:
 snip benchmark --output results.md
 ```
 
-The corpus covers 9 real output types across 7 pruning categories. Results from the current corpus:
-
-| File | Category | Raw Tokens | Pruned Tokens | Tokens Saved | % Reduction |
-| --- | --- | ---: | ---: | ---: | ---: |
-| ls_large.txt ✓ | directory_listing | 2,277 | 124 | 2,153 | 94.6% |
-| pip_install.txt ✓ | install_log | 2,030 | 110 | 1,920 | 94.6% |
-| test_pass.txt ✓ | test_output | 1,836 | 52 | 1,784 | 97.2% |
-| test_fail.txt ✓ | test_output | 1,073 | 229 | 844 | 78.7% |
-| build_log_fail.txt ✓ | build_log | 1,056 | 295 | 761 | 72.1% |
-| grep_results.txt ✓ | grep_results | 1,062 | 313 | 749 | 70.5% |
-| build_log_success.txt ✓ | build_log | 761 | 60 | 701 | 92.1% |
-| git_log.txt ✓ | git_output | 1,442 | 874 | 568 | 39.4% |
-| file_read_python.txt | durable | 223 | 223 | 0 | 0.0% |
-| **TOTAL** | — | **11,760** | **2,280** | **9,480** | **80.6%** |
-
-`file_read_python.txt` shows 0% reduction by design — source code is classified as Durable and always returned in full.
-
 See [`benchmark_results.md`](benchmark_results.md) for the full report.
 
 ---
@@ -182,16 +175,6 @@ See [`benchmark_results.md`](benchmark_results.md) for the full report.
 
 ---
 
-## Other Commands
-
-```bash
-snip status          # Show recent snip activity from the database
-snip serve           # Start the MCP server manually (for debugging)
-snip --version       # Check installed version
-```
-
----
-
 ## Technologies
 
 - **Python 3.11+** — runtime
@@ -204,69 +187,7 @@ snip --version       # Check installed version
 
 ---
 
-## Development
-
-```bash
-# Clone and install in editable mode with dev dependencies
-git clone https://github.com/umairhaque03/snip
-cd snip
-pip install -e ".[dev]"
-
-# Run tests
-pytest --cov
-
-# Lint
-ruff check src/ tests/
-
-# Type check
-mypy src/
-
-# Run the MCP server locally
-snip serve
-```
-
-### Running tests
-
-Tests require no external services. SQLite databases are created in temp directories and cleaned up automatically.
-
-```bash
-pytest                                         # Run all tests
-pytest tests/test_pruner.py                   # Run a specific module
-pytest --cov --cov-report=term-missing        # With coverage detail
-```
-
-### Inspecting stored output
-
-Raw output is stored in SQLite at `~/.snip/snip.db`.
-
-```bash
-sqlite3 ~/.snip/snip.db "SELECT id, command, created_at FROM raw_logs ORDER BY created_at DESC LIMIT 10;"
-```
-
----
-
-## Repository Structure
-
-```
-snip/
-├── src/snip/
-│   ├── classifier.py    # Rule-based Durable/Volatile classifier
-│   ├── pruner.py        # Output pruning and digest generation
-│   ├── server.py        # MCP server and tool handlers
-│   ├── cli.py           # CLI entrypoint (snip command)
-│   ├── config.py        # Claude Code MCP config registration
-│   ├── db.py            # SQLite storage for raw output logs
-│   ├── dashboard.py     # Live session stats display
-│   ├── metrics.py       # Per-call token metrics
-│   ├── tokenizer.py     # Token counting via tiktoken
-│   ├── constants.py     # Thresholds, patterns, config paths
-│   └── corpus/          # Sample shell outputs for benchmarking
-├── tests/               # Pytest test suite
-└── docs/
-    └── architecture.md  # System design and data flow
-```
-
----
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, testing, and repository structure.
 
 ## License
 
