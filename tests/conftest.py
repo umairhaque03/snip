@@ -1,5 +1,5 @@
 """
-Shared pytest fixtures for the BrainFog test suite.
+Shared pytest fixtures for the snip test suite.
 """
 
 from __future__ import annotations
@@ -8,14 +8,14 @@ from pathlib import Path
 
 import pytest
 
-from brainfog.classifier import ClassificationResult, VolatilityClass
-from brainfog.db import LogRepository
+from snip.classifier import ClassificationResult, VolatilityClass
+from snip.db import LogRepository
 
 
 @pytest.fixture
 def tmp_db(tmp_path: Path) -> Path:
     """Return a path to a temporary SQLite database file."""
-    return tmp_path / "test_brainfog.db"
+    return tmp_path / "test_snip.db"
 
 
 @pytest.fixture

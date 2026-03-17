@@ -1,4 +1,4 @@
-"""Tests for the brainfog benchmark command."""
+"""Tests for the snip benchmark command."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ from pathlib import Path
 
 from click.testing import CliRunner
 
-from brainfog.cli import benchmark
+from snip.cli import benchmark
 
 
 def test_benchmark_runs_without_error(corpus_dir: Path, tmp_path: Path):

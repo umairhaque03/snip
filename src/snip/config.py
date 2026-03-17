@@ -2,7 +2,7 @@
 Claude Code MCP config file manipulation.
 
 Manages reading, merging, and atomically writing to:
-  ~/.claude/claude_desktop_config.json
+  ~/.claude.json        (Claude Code — user-level MCP servers)
 
 All operations are immutable: read the existing config, create a new merged
 dict, write to a temp file, then rename into place. The original is never
@@ -18,12 +18,13 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-# The config file path, relative to the user's home directory.
-_CONFIG_RELATIVE_PATH = ".claude/claude_desktop_config.json"
+_CONFIG_RELATIVE_PATH = ".claude.json"
 
-# The MCP server entry that brainfog init injects.
-_BRAINFOG_SERVER_ENTRY: dict[str, Any] = {
-    "command": "brainfog",
+# Legacy server names to remove on registration
+_LEGACY_SERVER_NAMES: frozenset[str] = frozenset(["brainfog", "ctxsift"])
+
+_SNIP_SERVER_ENTRY: dict[str, Any] = {
+    "command": "snip",
     "args": ["serve"],
     "env": {},
 }
@@ -60,27 +61,30 @@ def read_config(config_path: Path | None = None) -> dict[str, Any]:
     return result
 
 
-def add_brainfog_server(
+def add_snip_server(
     config: dict[str, Any],
     server_entry: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """
-    Return a new config dict with the brainfog MCP server entry merged in.
+    Return a new config dict with the snip MCP server entry merged in.
 
     Does NOT mutate the input config. Creates a new dict.
+    Removes any legacy "brainfog" or "ctxsift" entries automatically.
 
     Args:
         config:       The existing parsed config dict.
         server_entry: Override for the server entry. Defaults to the standard entry.
 
     Returns:
-        A new dict with brainfog added under config["mcpServers"]["brainfog"].
+        A new dict with snip added under config["mcpServers"]["snip"].
     """
-    entry = server_entry or _BRAINFOG_SERVER_ENTRY
+    entry = server_entry or _SNIP_SERVER_ENTRY
     new_config: dict[str, Any] = copy.deepcopy(config)
     if "mcpServers" not in new_config or not isinstance(new_config["mcpServers"], dict):
         new_config["mcpServers"] = {}
-    new_config["mcpServers"]["brainfog"] = copy.deepcopy(entry)
+    for legacy_name in _LEGACY_SERVER_NAMES:
+        new_config["mcpServers"].pop(legacy_name, None)
+    new_config["mcpServers"]["snip"] = copy.deepcopy(entry)
     return new_config
 
 
@@ -119,16 +123,28 @@ def write_config_atomic(config: dict[str, Any], config_path: Path | None = None)
         raise
 
 
-def is_brainfog_registered(config_path: Path | None = None) -> bool:
+def is_snip_registered(config_path: Path | None = None) -> bool:
     """
-    Return True if brainfog is already registered in the MCP config.
+    Return True if snip is already registered in the MCP config.
+
+    Returns False if only legacy names ("brainfog", "ctxsift") are present,
+    indicating re-registration is needed to migrate to the new name.
 
     Args:
         config_path: Path to the config file. Defaults to the standard location.
 
     Returns:
-        True if "brainfog" exists under config["mcpServers"].
+        True if "snip" exists under config["mcpServers"].
     """
     config = read_config(config_path)
     mcp_servers = config.get("mcpServers", {})
-    return isinstance(mcp_servers, dict) and "brainfog" in mcp_servers
+    return isinstance(mcp_servers, dict) and "snip" in mcp_servers
+
+
+def has_legacy_server(config_path: Path | None = None) -> bool:
+    """Return True if any legacy MCP entry ("brainfog", "ctxsift") still exists."""
+    config = read_config(config_path)
+    mcp_servers = config.get("mcpServers", {})
+    return isinstance(mcp_servers, dict) and bool(
+        _LEGACY_SERVER_NAMES & set(mcp_servers.keys())
+    )

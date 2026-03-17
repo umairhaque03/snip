@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from brainfog.db import LogRepository, RawLogEntry
+from snip.db import LogRepository, RawLogEntry
 
 # ---------------------------------------------------------------------------
 # Initialization
@@ -41,7 +41,7 @@ async def test_store_and_retrieve_raw_output(tmp_db: Path):
         tool_name="Bash",
         command="ls -la",
         raw_output="file1\nfile2\nfile3",
-        pruned_output="[BrainFog] 3 entries",
+        pruned_output="[snip] 3 entries",
         volatility="volatile",
         category="directory_listing",
         line_count_raw=3,
@@ -74,7 +74,7 @@ async def test_get_log_entry_returns_full_entry(tmp_db: Path):
         tool_name="Bash",
         command="grep -r TODO src/",
         raw_output="\n".join(f"src/file.py:{i}: TODO" for i in range(5)),
-        pruned_output="[BrainFog] 5 matches",
+        pruned_output="[snip] 5 matches",
         volatility="volatile",
         category="grep_results",
         line_count_raw=5,
@@ -107,7 +107,7 @@ async def test_session_stats_totals_are_correct(tmp_db: Path):
             tool_name="Bash",
             command=f"ls {i}",
             raw_output="x\n" * 100,
-            pruned_output="[BrainFog] summary",
+            pruned_output="[snip] summary",
             volatility="volatile",
             category="directory_listing",
             line_count_raw=100,
@@ -151,7 +151,7 @@ async def test_cleanup_removes_old_logs(tmp_db: Path):
         tool_name="Bash",
         command="ls",
         raw_output="old output",
-        pruned_output="[BrainFog] old",
+        pruned_output="[snip] old",
         volatility="volatile",
         category="directory_listing",
         line_count_raw=1,

@@ -1,17 +1,21 @@
 """
-BrainFog MCP server.
+snip MCP server.
 
 Registers three tools with the MCP SDK:
-  - brainfog_intercept: Execute a command with output optimization
-  - get_raw_output:     Retrieve full output for a pruned result by ID
-  - get_session_stats:  Token savings summary for the current session
+  - snip_run:          Execute a command with output optimization
+  - get_raw_output:    Retrieve full output for a pruned result by ID
+  - get_session_stats: Token savings summary for the current session
 
 The server runs over stdio transport (standard for Claude Code MCP servers).
+Dashboard and log output go to stderr so they never corrupt MCP protocol
+messages on stdout.
 """
 
 from __future__ import annotations
 
+import logging
 import subprocess
+import sys
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -19,23 +23,28 @@ from pathlib import Path
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
 from mcp.types import TextContent, Tool
+from rich.console import Console
 
-from brainfog.classifier import classify
-from brainfog.db import LogRepository, RawLogEntry
-from brainfog.pruner import prune
+from snip.classifier import classify
+from snip.constants import MCP_MAX_RESULT_CHARS
+from snip.db import LogRepository, RawLogEntry
+from snip.metrics import ToolCallMetric
+from snip.pruner import prune
+
+logger = logging.getLogger("snip")
 
 # ---------------------------------------------------------------------------
 # Server state
 # ---------------------------------------------------------------------------
 
-# Each invocation of `brainfog serve` gets a fresh session ID.
 SESSION_ID: str = str(uuid.uuid4())
 
-# Module-level repository — initialized in serve().
 _repo: LogRepository | None = None
-
-# Session start time for uptime reporting.
+_dashboard: "Dashboard | None" = None
 _session_start: datetime = datetime.now(timezone.utc)
+
+# stderr console for any output that must not interfere with stdio MCP.
+_stderr_console = Console(stderr=True)
 
 
 def _get_repo() -> LogRepository:
@@ -48,17 +57,17 @@ def _get_repo() -> LogRepository:
 # MCP server setup
 # ---------------------------------------------------------------------------
 
-server = Server("brainfog")
+server = Server("snip")
 
 
 @server.list_tools()
 async def list_tools() -> list[Tool]:
-    """Advertise available BrainFog tools to Claude."""
+    """Advertise available snip tools to Claude."""
     return [
         Tool(
-            name="brainfog_intercept",
+            name="snip_run",
             description=(
-                "Execute a shell command with BrainFog output optimization. "
+                "Execute a shell command with snip output optimization. "
                 "Volatile outputs over 50 lines are automatically pruned to a compact digest. "
                 "The full raw output is stored locally and retrievable via get_raw_output."
             ),
@@ -97,7 +106,7 @@ async def list_tools() -> list[Tool]:
         Tool(
             name="get_session_stats",
             description=(
-                "Get token savings statistics for the current BrainFog session. "
+                "Get token savings statistics for the current snip session. "
                 "Returns total tokens saved, % context reduction, prune count, "
                 "and the heaviest single prune."
             ),
@@ -114,7 +123,7 @@ async def list_tools() -> list[Tool]:
 async def call_tool(name: str, arguments: dict) -> list[TextContent]:
     """Dispatch incoming tool calls to the appropriate handler."""
     try:
-        if name == "brainfog_intercept":
+        if name == "snip_run":
             text = await _handle_intercept(
                 command=arguments["command"],
                 working_directory=arguments.get("working_directory"),
@@ -126,7 +135,14 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
         else:
             text = f"Unknown tool: {name!r}"
     except Exception as exc:
-        text = f"BrainFog error: {exc}"
+        logger.exception("snip tool error")
+        text = f"snip error: {exc}"
+
+    if len(text) > MCP_MAX_RESULT_CHARS:
+        text = text[:MCP_MAX_RESULT_CHARS] + (
+            f"\n\n[snip] Output truncated at {MCP_MAX_RESULT_CHARS:,} chars "
+            f"(original was {len(text):,} chars)"
+        )
 
     return [TextContent(type="text", text=text)]
 
@@ -140,14 +156,15 @@ async def _handle_intercept(
     working_directory: str | None = None,
 ) -> str:
     """
-    Execute a shell command with BrainFog output optimization.
+    Execute a shell command with snip output optimization.
 
     Pipeline:
       1. Run command via subprocess
       2. Classify output (Durable vs Volatile + category)
       3. If Volatile and > 50 lines, prune to digest
       4. Store raw log in SQLite
-      5. Return pruned output (or original if not pruned)
+      5. Push metric to dashboard
+      6. Return pruned output (or original if not pruned)
     """
     proc = subprocess.run(
         command,
@@ -157,12 +174,10 @@ async def _handle_intercept(
         cwd=working_directory,
     )
 
-    # Combine stdout and stderr; prefer stdout, append stderr if present
     stdout = proc.stdout or ""
     stderr = proc.stderr or ""
     combined = stdout + stderr if stderr else stdout
 
-    # Classify → prune → store
     classification = classify(tool_name="Bash", command=command, output=combined)
     log_id = RawLogEntry.new_id()
     result = prune(combined, log_id, classification)
@@ -186,7 +201,29 @@ async def _handle_intercept(
     )
     await _get_repo().store_log(entry)
 
+    _push_metric(entry)
+
     return result.pruned_output
+
+
+def _push_metric(entry: RawLogEntry) -> None:
+    """Send a metric to the dashboard if it's running."""
+    if _dashboard is None:
+        return
+    _dashboard.push(
+        ToolCallMetric(
+            log_id=entry.id,
+            tool_name=entry.tool_name,
+            command=entry.command,
+            category=entry.category,
+            volatility=entry.volatility,
+            tokens_raw=entry.tokens_raw,
+            tokens_pruned=entry.tokens_pruned,
+            tokens_saved=entry.tokens_saved,
+            was_pruned=entry.was_pruned,
+            timestamp=entry.created_at,
+        )
+    )
 
 
 async def _handle_get_raw_output(log_id: str) -> str:
@@ -209,7 +246,7 @@ async def _handle_get_session_stats() -> str:
     uptime_str = str(uptime).split(".")[0]  # strip microseconds
 
     lines = [
-        "BrainFog Session Stats",
+        "snip Session Stats",
         f"  Session ID:      {stats.session_id}",
         f"  Uptime:          {uptime_str}",
         f"  Total calls:     {stats.total_tool_calls}",
@@ -240,7 +277,13 @@ async def serve(db_path: Path | None = None) -> None:
     Args:
         db_path: Override for the SQLite database path. Uses default if None.
     """
-    global _repo, _session_start
+    global _repo, _dashboard, _session_start
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [snip] %(levelname)s %(message)s",
+        stream=sys.stderr,
+    )
 
     repo = LogRepository(db_path)
     await repo.initialize()
@@ -248,10 +291,13 @@ async def serve(db_path: Path | None = None) -> None:
     _repo = repo
     _session_start = datetime.now(timezone.utc)
 
-    from brainfog.dashboard import Dashboard
+    from snip.dashboard import Dashboard
 
-    dashboard = Dashboard()
+    dashboard = Dashboard(console=_stderr_console)
+    _dashboard = dashboard
     dashboard.start()
+
+    logger.info("snip MCP server started (session %s)", SESSION_ID)
 
     try:
         async with stdio_server() as (read_stream, write_stream):
@@ -262,3 +308,4 @@ async def serve(db_path: Path | None = None) -> None:
             )
     finally:
         dashboard.stop()
+        logger.info("snip MCP server stopped")

@@ -13,11 +13,15 @@ from __future__ import annotations
 # Volatile outputs with more lines than this will be pruned.
 PRUNE_LINE_THRESHOLD: int = 50
 
+# Hard ceiling on MCP result size (characters). Claude Code rejects results
+# exceeding ~1 M chars; we cap well below that to stay safe.
+MCP_MAX_RESULT_CHARS: int = 200_000
+
 # Default number of days to retain raw logs in SQLite before cleanup.
 LOG_RETENTION_DAYS: int = 7
 
 # Default SQLite database path (resolved at runtime relative to home dir).
-DB_RELATIVE_PATH: str = ".brainfog/brainfog.db"
+DB_RELATIVE_PATH: str = ".snip/snip.db"
 
 # tiktoken encoding to use for token counting.
 # cl100k_base is the closest public approximation to Claude's tokenizer.
@@ -147,7 +151,7 @@ VOLATILE_CONTENT_PATTERNS: list[str] = [
 # Digest formatting
 # ---------------------------------------------------------------------------
 
-BRAINFOG_TAG: str = "[BrainFog]"
+BRAINFOG_TAG: str = "[snip]"
 RETRIEVAL_HINT_TEMPLATE: str = (
     "[Pruned from {line_count} lines. "
     "Use get_raw_output(id='{log_id}') for full output]"

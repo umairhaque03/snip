@@ -15,9 +15,9 @@ from __future__ import annotations
 
 import pytest
 
-from brainfog.classifier import ClassificationResult, VolatilityClass
-from brainfog.constants import PRUNE_LINE_THRESHOLD
-from brainfog.pruner import prune
+from snip.classifier import ClassificationResult, VolatilityClass
+from snip.constants import PRUNE_LINE_THRESHOLD
+from snip.pruner import prune
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -172,14 +172,14 @@ def test_git_output_digest_shows_commit_count():
 
 def test_install_log_digest_shows_packages():
     lines = [
-        "Collecting brainfog",
+        "Collecting snip",
         *[f"Collecting dep{i}" for i in range(20)],
-        "Installing collected packages: " + ", ".join(f"dep{i}" for i in range(20)) + ", brainfog",
-        "Successfully installed brainfog-0.1.0 " + " ".join(f"dep{i}-1.0.{i}" for i in range(20)),
+        "Installing collected packages: " + ", ".join(f"dep{i}" for i in range(20)) + ", snip",
+        "Successfully installed snip-0.1.0 " + " ".join(f"dep{i}-1.0.{i}" for i in range(20)),
     ]
     output = "\n".join(lines)
     result = prune(output, "test-id", volatile("install_log"))
-    assert "brainfog" in result.pruned_output
+    assert "snip" in result.pruned_output
 
 
 def test_generic_digest_shows_head_and_tail():

@@ -2,7 +2,7 @@
 Rich live CLI dashboard.
 
 Shows a real-time table of recent tool calls and a running "Tokens Saved"
-counter during an active brainfog serve session.
+counter during an active snip serve session.
 
 The dashboard runs in a background thread and is safe to update from the
 async MCP event loop via thread-safe queue.
@@ -22,7 +22,7 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
-from brainfog.metrics import ToolCallMetric
+from snip.metrics import ToolCallMetric
 
 # ---------------------------------------------------------------------------
 # Types
@@ -74,7 +74,7 @@ class Dashboard:
     def start(self) -> None:
         """Start the dashboard background thread."""
         self._start_time = datetime.now(timezone.utc)
-        self._thread = threading.Thread(target=self._run, daemon=True, name="brainfog-dashboard")
+        self._thread = threading.Thread(target=self._run, daemon=True, name="snip-dashboard")
         self._thread.start()
 
     def stop(self) -> None:
@@ -118,7 +118,7 @@ class Dashboard:
         Build the current Rich renderable from internal state.
 
         Returns a Layout with:
-          - Header: "BrainFog" title + session uptime
+          - Header: "snip" title + session uptime
           - Body: Table of recent tool calls (last MAX_ROWS)
           - Footer: Running totals (tokens saved, calls, prunes)
         """
@@ -133,7 +133,7 @@ class Dashboard:
         uptime = datetime.now(timezone.utc) - self._start_time
         uptime_str = str(uptime).split(".")[0]  # strip microseconds
         header_text = Text.assemble(
-            ("BrainFog", "bold green"),
+            ("snip", "bold green"),
             "  |  ",
             ("Uptime: ", "dim"),
             (uptime_str, "cyan"),

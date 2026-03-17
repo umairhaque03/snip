@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import tiktoken
 
-from brainfog.constants import TIKTOKEN_ENCODING
+from snip.constants import TIKTOKEN_ENCODING
 
 # Module-level singleton — encoding initialization is expensive.
 _encoding: tiktoken.Encoding | None = None

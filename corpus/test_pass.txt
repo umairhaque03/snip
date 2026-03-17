@@ -1,6 +1,6 @@
 ============================= test session starts ==============================
 platform darwin -- Python 3.12.0, pytest-8.1.0, pluggy-1.4.0
-rootdir: /Users/user/Desktop/BrainFog
+rootdir: /Users/user/Desktop/snip
 configfile: pyproject.toml
 collected 47 items
 

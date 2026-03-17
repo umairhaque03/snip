@@ -1,8 +1,8 @@
-# BrainFog Architecture
+# snip Architecture
 
 ## Overview
 
-BrainFog is a Python MCP server that reduces token bloat in agentic AI workflows
+snip is a Python MCP server that reduces token bloat in agentic AI workflows
 by intercepting tool outputs, classifying them, and pruning noisy Volatile outputs
 before they reach Claude's context window.
 
@@ -11,9 +11,9 @@ before they reach Claude's context window.
 ```
 Claude Code
     │
-    │  calls brainfog_intercept(command)
+    │  calls snip_run(command)
     ▼
-brainfog MCP Server (server.py)
+snip MCP Server (server.py)
     │
     ├─► classifier.classify(tool_name, command, output)
     │       └─► returns ClassificationResult (Durable | Volatile + category)
@@ -25,7 +25,7 @@ brainfog MCP Server (server.py)
     │               pass through unchanged
     │
     ├─► db.store_log(RawLogEntry)
-    │       └─► SQLite: ~/.brainfog/brainfog.db
+    │       └─► SQLite: ~/.snip/snip.db
     │
     └─► return pruned_output to Claude
 ```
@@ -55,7 +55,7 @@ All digests end with: `[Pruned from N lines. Use get_raw_output(id='...') for fu
 
 ## Database Schema
 
-Single table `raw_logs` in `~/.brainfog/brainfog.db`:
+Single table `raw_logs` in `~/.snip/snip.db`:
 
 | Column | Type | Description |
 |---|---|---|
@@ -88,7 +88,7 @@ All data models (`ClassificationResult`, `PrunedResult`, `RawLogEntry`,
 ## MCP Tool Interface
 
 ```
-brainfog_intercept(command, working_directory?) → string
+snip_run(command, working_directory?) → string
 get_raw_output(log_id) → string
 get_session_stats() → string
 ```
@@ -96,7 +96,7 @@ get_session_stats() → string
 ## File Map
 
 ```
-src/brainfog/
+src/snip/
 ├── constants.py    # All thresholds, patterns, category mappings
 ├── tokenizer.py    # tiktoken wrapper
 ├── classifier.py   # classify() pure function

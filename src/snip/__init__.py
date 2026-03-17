@@ -1,8 +1,8 @@
 """
-BrainFog — MCP server that reduces token bloat in agentic AI workflows.
+snip — MCP server that reduces token bloat in agentic AI workflows.
 
 Public API surface is intentionally minimal. Consumers should use the CLI
-(`brainfog init`, `brainfog serve`, `brainfog benchmark`) rather than
+(`snip init`, `snip serve`, `snip benchmark`) rather than
 importing internals directly.
 """
 

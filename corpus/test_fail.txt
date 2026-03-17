@@ -1,6 +1,6 @@
 ============================= test session starts ==============================
 platform darwin -- Python 3.12.0, pytest-8.1.0, pluggy-1.4.0
-rootdir: /Users/user/Desktop/BrainFog
+rootdir: /Users/user/Desktop/snip
 configfile: pyproject.toml
 collected 47 items
 
@@ -17,15 +17,15 @@ _______________ test_prune_directory_listing_shows_extensions ________________
 
 tests/test_pruner.py:89: in test_prune_directory_listing_shows_extensions
     assert ".py" in result.pruned_output
-E   AssertionError: assert ".py" in "[BrainFog] Directory listing: 80 entries\n[Pruned from..."
-E   +  where "[BrainFog] Directory listing: 80 entries\n[Pruned from..." = PrunedResult(log_id='abc123', ...).pruned_output
+E   AssertionError: assert ".py" in "[snip] Directory listing: 80 entries\n[Pruned from..."
+E   +  where "[snip] Directory listing: 80 entries\n[Pruned from..." = PrunedResult(log_id='abc123', ...).pruned_output
 
 _______________ test_prune_test_output_extracts_failures ______________________
 
 tests/test_pruner.py:134: in test_prune_test_output_extracts_failures
     assert "test_auth_login" in result.pruned_output
-E   AssertionError: assert "test_auth_login" in "[BrainFog] Test results: 3 failed\n[Pruned from..."
-E   +  where "[BrainFog] Test results: 3 failed\n[Pruned from..." = PrunedResult(log_id='def456', ...).pruned_output
+E   AssertionError: assert "test_auth_login" in "[snip] Test results: 3 failed\n[Pruned from..."
+E   +  where "[snip] Test results: 3 failed\n[Pruned from..." = PrunedResult(log_id='def456', ...).pruned_output
 
 _______________ test_handle_intercept_stores_log ______________________________
 

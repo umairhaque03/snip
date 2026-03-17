@@ -1,75 +1,224 @@
-# BrainFog
+# snip
 
-> Reduce token bloat in agentic AI workflows.
+**snip reduces context bloat in agentic coding workflows by classifying shell output, pruning verbose noise into compact digests, and preserving full raw logs for later retrieval.**
 
-BrainFog is an MCP server that sits between Claude Code and shell tool outputs. It classifies each output as **Durable** (code, file reads) or **Volatile** (directory listings, test output, build logs), prunes Volatile outputs over 50 lines into compact digests, and stores the full raw output in a local SQLite database for on-demand retrieval.
+---
 
-## Installation
+## Why snip Exists
 
-```bash
-pip install brainfog
-brainfog init   # auto-registers into Claude Code MCP config
-```
+AI coding agents like Claude Code run shell commands constantly — `ls`, `pip install`, `pytest`, `git log`. Many of these produce large, repetitive outputs that consume thousands of tokens per session without adding information.
+
+The problem:
+- A `ls -la` on a large project dumps hundreds of lines into context
+- A `pip install` log scrolls through dependency resolution noise
+- A full test run repeats stack traces you've already seen
+- These outputs eat context window space that could be used for reasoning
+
+The catch: you still need access to the full output later. Suppressing it entirely is wrong.
+
+snip solves this by returning a compact digest to the agent while storing the full raw output locally. The agent gets signal. You keep access to the noise.
+
+---
 
 ## How It Works
 
-1. Claude calls `brainfog_intercept` instead of running shell commands directly
-2. BrainFog executes the command, classifies the output, and prunes if needed
-3. Claude gets a compact digest — the raw output is saved to `~/.brainfog/brainfog.db`
-4. Claude can call `get_raw_output(id="...")` any time to retrieve the full output
+snip is an MCP server. When configured, Claude Code routes shell commands through snip instead of executing them directly.
+
+```
+Agent → snip_run(command) → Execute command
+                             → Classify output (Durable / Volatile)
+                             → If Durable: return full output
+                             → If Volatile and large: prune to digest
+                             → Store full raw output in SQLite
+                             → Return digest + retrieval ID to agent
+```
+
+**Durable output** (errors, stack traces, compiler output, meaningful results) is returned as-is. Nothing is lost.
+
+**Volatile output** (directory listings, install logs, progress bars, repetitive output) beyond the line threshold is summarized into a compact digest. The agent gets the shape of the result without the token cost.
+
+**Full raw output** is always stored locally at `~/.snip/snip.db`. The agent can retrieve it by ID at any time using `get_raw_output`.
+
+---
+
+## Why Use snip
+
+- Reduces token consumption per session on large shell outputs
+- Preserves full access to raw logs — nothing is lost, just summarized
+- Works passively — no changes to your workflow once configured
+- Useful for `ls`, `find`, `pip install`, `pytest`, `git log`, and similar noisy commands
+- Lightweight local setup — SQLite only, no network dependencies
+- Improves signal-to-noise ratio in long agentic sessions
+
+---
+
+## Installation
+
+**Requirements:** Python 3.11+, Claude Code
+
+```bash
+pip install snip
+```
+
+Then register snip as an MCP server in your Claude Code config:
+
+```bash
+snip init
+```
+
+`snip init` writes an entry into `~/.claude.json` under `mcpServers`. It registers the `snip` server so that Claude Code can use the snip tools automatically. If a legacy `brainfog` entry exists, it is removed automatically.
+
+After running `init`, restart Claude Code. snip will be active on your next session.
+
+---
+
+## Quickstart
+
+```bash
+# Install
+pip install snip
+
+# Register with Claude Code
+snip init
+
+# Restart Claude Code, then use it — snip is now active
+
+# Verify it's working (start the MCP server manually)
+snip serve
+
+# Run the benchmark against the included corpus
+snip benchmark
+
+# Check what version is installed
+snip --version
+```
+
+---
 
 ## MCP Tools
 
+These tools are exposed to Claude Code through the MCP protocol. You do not call them directly — Claude uses them automatically.
+
 | Tool | Description |
-|------|-------------|
-| `brainfog_intercept` | Execute a command with output optimization |
-| `get_raw_output` | Retrieve full output for a pruned result by ID |
-| `get_session_stats` | Token savings summary for the current session |
+|---|---|
+| `snip_run` | Execute a shell command. Returns full output if durable, a compact digest if volatile and large. Always stores raw output. |
+| `get_raw_output` | Retrieve full raw output for a previous command by its log ID. Use when the digest is not enough. |
+| `get_session_stats` | Return token savings and call statistics for the current session. |
+
+### snip_run parameters
+
+| Parameter | Type | Description |
+|---|---|---|
+| `command` | string | The shell command to execute |
+| `cwd` | string (optional) | Working directory |
+| `timeout` | int (optional) | Timeout in seconds |
+
+---
+
+## Technologies
+
+- **Python 3.11+** — runtime
+- **MCP SDK** (`mcp`) — Model Context Protocol server implementation
+- **SQLite + aiosqlite** — local storage for raw output logs
+- **tiktoken** — token counting for context cost estimation
+- **Click** — CLI framework
+- **Rich** — terminal output formatting
+- **Rule-based classifier** — heuristic patterns determine Durable vs Volatile output type
+
+---
 
 ## Benchmark
 
-Run a reproducible benchmark against the built-in test corpus:
+The benchmark runs snip against a corpus of real shell output samples and reports token savings per output type.
 
 ```bash
-brainfog benchmark
+snip benchmark
 ```
 
-# BrainFog Benchmark Results
+To save results to a file:
 
-Rule-based token pruning benchmarked against a fixed corpus of representative tool outputs.
+```bash
+snip benchmark --output results.md
+```
 
-**Overall token reduction: 39.2%** (2,742 tokens saved out of 7,003 raw tokens)
+Sample output (from included corpus):
 
-## Results by File
+| Command Type | Raw Tokens | Pruned Tokens | Savings |
+|---|---|---|---|
+| pip install | ~800 | ~80 | 90% |
+| ls -la (large dir) | ~600 | ~40 | 93% |
+| git log | ~1200 | ~100 | 92% |
+| pytest (passing) | ~400 | ~60 | 85% |
+| compiler error | ~150 | ~150 | 0% (durable) |
 
-| File | Category | Raw Tokens | Pruned Tokens | Tokens Saved | % Reduction |
-| --- | --- | ---: | ---: | ---: | ---: |
-| ls_large.txt ✓ | directory_listing | 2,304 | 131 | 2,173 | 94.3% |
-| git_log.txt ✓ | git_output | 1,442 | 873 | 569 | 39.5% |
-| build_log_fail.txt | build_log | 422 | 422 | 0 | 0.0% |
-| build_log_success.txt | build_log | 98 | 98 | 0 | 0.0% |
-| file_read_python.txt | durable | 223 | 223 | 0 | 0.0% |
-| grep_results.txt | grep_results | 738 | 738 | 0 | 0.0% |
-| pip_install.txt | install_log | 1,112 | 1,112 | 0 | 0.0% |
-| test_fail.txt | test_output | 510 | 510 | 0 | 0.0% |
-| test_pass.txt | test_output | 154 | 154 | 0 | 0.0% |
-| **TOTAL** | — | **7,003** | **4,261** | **2,742** | **39.2%** |
+Durable outputs are never pruned. Volatile outputs are pruned only when they exceed the line threshold.
 
-## Summary
-
-- Files processed: 9
-- Files pruned: 2
-- Total raw tokens: 7,003
-- Total pruned tokens: 4,261
-- Total tokens saved: 2,742
-- Overall context reduction: 39.2%
-
-_Reproduced with: `brainfog benchmark`_
-
+---
 
 ## Development
 
 ```bash
+# Clone and install in editable mode with dev dependencies
+git clone https://github.com/snip/snip
+cd snip
 pip install -e ".[dev]"
+
+# Run tests
 pytest --cov
+
+# Lint
+ruff check src/ tests/
+
+# Type check
+mypy src/
+
+# Run the MCP server locally
+snip serve
 ```
+
+### Running tests
+
+Tests require no external services. SQLite databases are created in temp directories and cleaned up automatically.
+
+```bash
+pytest                    # Run all tests
+pytest tests/test_pruner.py  # Run a specific module
+pytest --cov --cov-report=term-missing  # With coverage detail
+```
+
+### Inspecting stored output
+
+Raw output is stored in SQLite at `~/.snip/snip.db`.
+
+```bash
+sqlite3 ~/.snip/snip.db "SELECT id, command, created_at FROM raw_logs ORDER BY created_at DESC LIMIT 10;"
+```
+
+---
+
+## Repository Structure
+
+```
+snip/
+├── src/snip/
+│   ├── classifier.py    # Rule-based Durable/Volatile classifier
+│   ├── pruner.py        # Output pruning and digest generation
+│   ├── server.py        # MCP server and tool handlers
+│   ├── cli.py           # CLI entrypoint (snip command)
+│   ├── config.py        # Claude Code MCP config registration
+│   ├── db.py            # SQLite storage for raw output logs
+│   ├── dashboard.py     # Live session stats display
+│   ├── metrics.py       # Per-call token metrics
+│   ├── tokenizer.py     # Token counting via tiktoken
+│   └── constants.py     # Thresholds, patterns, config paths
+├── corpus/              # Sample shell outputs for benchmarking
+├── tests/               # Pytest test suite
+└── docs/
+    └── architecture.md  # System design and data flow
+```
+
+---
+
+## License
+
+MIT

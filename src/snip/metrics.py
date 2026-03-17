@@ -12,7 +12,7 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class ToolCallMetric:
-    """Metrics for a single tool call intercepted by BrainFog."""
+    """Metrics for a single tool call intercepted by snip."""
 
     log_id: str           # UUID matching the raw_logs table
     tool_name: str        # e.g., "Bash", "Grep", "Read"
@@ -28,7 +28,7 @@ class ToolCallMetric:
 
 @dataclass(frozen=True)
 class SessionStats:
-    """Aggregated token savings for the current BrainFog session."""
+    """Aggregated token savings for the current snip session."""
 
     session_id: str
     total_tool_calls: int

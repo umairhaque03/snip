@@ -1,10 +1,10 @@
 """
-BrainFog CLI entry point.
+snip CLI entry point.
 
 Commands:
-  brainfog init        Register BrainFog as an MCP server in Claude Code config
-  brainfog serve       Start the BrainFog MCP server (stdio transport)
-  brainfog benchmark   Run BrainFog against the test corpus and produce a report
+  snip init        Register snip as an MCP server in Claude Code config
+  snip serve       Start the snip MCP server (stdio transport)
+  snip benchmark   Run snip against the test corpus and produce a report
 """
 
 from __future__ import annotations
@@ -21,13 +21,13 @@ console = Console()
 
 
 @click.group()
-@click.version_option(package_name="brainfog")
+@click.version_option(package_name="snip")
 def main() -> None:
-    """BrainFog — Reduce token bloat in agentic AI workflows."""
+    """snip — Reduce token bloat in agentic AI workflows."""
 
 
 # ---------------------------------------------------------------------------
-# brainfog init
+# snip init
 # ---------------------------------------------------------------------------
 
 @main.command()
@@ -39,47 +39,66 @@ def main() -> None:
 )
 @click.option("--force", is_flag=True, help="Re-register even if already registered.")
 def init(config: Path | None, force: bool) -> None:
-    """Register BrainFog as an MCP server in Claude Code config."""
-    from brainfog.config import (
-        add_brainfog_server,
+    """Register snip as an MCP server in Claude Code config."""
+    from snip.config import (
+        add_snip_server,
         get_config_path,
-        is_brainfog_registered,
+        has_legacy_server,
+        is_snip_registered,
         read_config,
         write_config_atomic,
     )
 
     config_path = config or get_config_path()
 
-    if not force and is_brainfog_registered(config_path):
+    if not force and is_snip_registered(config_path):
+        if has_legacy_server(config_path):
+            console.print(
+                Panel(
+                    f"[yellow]snip is registered but stale legacy entries "
+                    f"were found.[/yellow]\n"
+                    f"Config: {config_path}\n"
+                    f"Run [bold]snip init --force[/bold] to clean them up.",
+                    title="snip Init",
+                )
+            )
+            return
         console.print(
             Panel(
-                f"[green]BrainFog is already registered.[/green]\n"
+                f"[green]snip is already registered.[/green]\n"
                 f"Config: {config_path}\n"
                 f"Use [bold]--force[/bold] to re-register.",
-                title="BrainFog Init",
+                title="snip Init",
             )
         )
         return
 
     existing_config = read_config(config_path)
-    new_config = add_brainfog_server(existing_config)
+    removed_legacy = has_legacy_server(config_path)
+    new_config = add_snip_server(existing_config)
     write_config_atomic(new_config, config_path)
 
-    entry = new_config["mcpServers"]["brainfog"]
+    entry = new_config["mcpServers"]["snip"]
+    legacy_note = (
+        "\n[dim]Removed legacy entries.[/dim]"
+        if removed_legacy
+        else ""
+    )
     console.print(
         Panel(
-            f"[green]BrainFog registered successfully.[/green]\n\n"
+            f"[green]snip registered successfully.[/green]\n\n"
             f"Config path: [bold]{config_path}[/bold]\n"
             f"Server entry:\n"
             f"  command: {entry['command']}\n"
-            f"  args:    {entry['args']}",
-            title="BrainFog Init",
+            f"  args:    {entry['args']}"
+            f"{legacy_note}",
+            title="snip Init",
         )
     )
 
 
 # ---------------------------------------------------------------------------
-# brainfog serve
+# snip serve
 # ---------------------------------------------------------------------------
 
 @main.command()
@@ -90,14 +109,107 @@ def init(config: Path | None, force: bool) -> None:
     help="Override path to the SQLite database file.",
 )
 def serve(db: Path | None) -> None:
-    """Start the BrainFog MCP server (stdio transport, for use by Claude Code)."""
-    from brainfog.server import serve as _serve
+    """Start the snip MCP server (stdio transport, for use by Claude Code)."""
+    from snip.server import serve as _serve
 
     asyncio.run(_serve(db_path=db))
 
 
 # ---------------------------------------------------------------------------
-# brainfog benchmark
+# snip status
+# ---------------------------------------------------------------------------
+
+@main.command()
+@click.option(
+    "--db",
+    type=click.Path(path_type=Path),
+    default=None,
+    help="Override path to the SQLite database file.",
+)
+@click.option(
+    "--last",
+    type=int,
+    default=10,
+    show_default=True,
+    help="Number of recent log entries to show.",
+)
+def status(db: Path | None, last: int) -> None:
+    """Show recent snip MCP activity (reads from the SQLite database)."""
+    from snip.constants import DB_RELATIVE_PATH
+    from snip.db import LogRepository
+
+    async def _run() -> None:
+        db_path = db or (Path.home() / DB_RELATIVE_PATH)
+        if not db_path.exists():
+            console.print(
+                f"[yellow]No snip database found at {db_path}[/yellow]\n"
+                "Run a Claude Code session with snip registered to generate data."
+            )
+            return
+
+        repo = LogRepository(db_path)
+        await repo.initialize()
+
+        # Fetch the most recent logs across all sessions
+        import aiosqlite
+        import sqlite3
+
+        async with aiosqlite.connect(db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            async with conn.execute(
+                "SELECT * FROM raw_logs ORDER BY created_at DESC LIMIT ?",
+                (last,),
+            ) as cursor:
+                rows = await cursor.fetchall()
+
+        if not rows:
+            console.print("[yellow]No snip log entries found yet.[/yellow]")
+            return
+
+        table = Table(
+            title=f"snip — Last {len(rows)} Tool Calls",
+            show_header=True,
+            header_style="bold cyan",
+        )
+        table.add_column("Time", style="dim", width=19)
+        table.add_column("Command", no_wrap=True, max_width=45)
+        table.add_column("Category")
+        table.add_column("Raw Tok", justify="right")
+        table.add_column("Pruned Tok", justify="right")
+        table.add_column("Saved", justify="right", style="green")
+        table.add_column("Pruned?", justify="center")
+
+        total_saved = 0
+        total_raw = 0
+        for row in rows:
+            cmd = row["command"] or ""
+            if len(cmd) > 45:
+                cmd = cmd[:42] + "..."
+            pruned_marker = "[green]YES[/green]" if row["was_pruned"] else "[dim]no[/dim]"
+            table.add_row(
+                row["created_at"],
+                cmd,
+                row["category"],
+                f"{row['tokens_raw']:,}",
+                f"{row['tokens_pruned']:,}",
+                f"{row['tokens_saved']:,}",
+                pruned_marker,
+            )
+            total_saved += row["tokens_saved"]
+            total_raw += row["tokens_raw"]
+
+        console.print(table)
+        pct = (total_saved / total_raw * 100) if total_raw > 0 else 0.0
+        console.print(
+            f"\n[bold green]Total tokens saved:[/bold green] {total_saved:,} "
+            f"/ {total_raw:,} raw ({pct:.1f}% reduction)"
+        )
+
+    asyncio.run(_run())
+
+
+# ---------------------------------------------------------------------------
+# snip benchmark
 # ---------------------------------------------------------------------------
 
 @main.command()
@@ -117,14 +229,14 @@ def serve(db: Path | None) -> None:
 )
 def benchmark(output: Path, corpus: Path | None) -> None:
     """
-    Run BrainFog against the test corpus and produce a markdown report.
+    Run snip against the test corpus and produce a markdown report.
 
     Loads all .txt files from the corpus/ directory, classifies and prunes
     each one, counts tokens before and after, and writes a summary report.
     """
-    from brainfog.classifier import classify
-    from brainfog.db import RawLogEntry
-    from brainfog.pruner import prune
+    from snip.classifier import classify
+    from snip.db import RawLogEntry
+    from snip.pruner import prune
 
     corpus_dir = corpus or (Path(__file__).parent.parent.parent / "corpus")
 
@@ -216,7 +328,7 @@ def _write_benchmark_report(rows: list[dict], output: Path) -> None:
     overall_pct = (total_saved / total_raw * 100) if total_raw > 0 else 0.0
 
     lines = [
-        "# BrainFog Benchmark Results",
+        "# snip Benchmark Results",
         "",
         "Rule-based token pruning benchmarked against a fixed corpus of representative tool outputs.",
         "",
@@ -255,7 +367,7 @@ def _write_benchmark_report(rows: list[dict], output: Path) -> None:
         f"- Total tokens saved: {total_saved:,}",
         f"- Overall context reduction: {overall_pct:.1f}%",
         "",
-        "_Reproduced with: `brainfog benchmark`_",
+        "_Reproduced with: `snip benchmark`_",
     ]
 
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -265,7 +377,7 @@ def _write_benchmark_report(rows: list[dict], output: Path) -> None:
 def _print_benchmark_table(rows: list[dict]) -> None:
     """Print a rich table of benchmark results to the terminal."""
     table = Table(
-        title="BrainFog Benchmark Results",
+        title="snip Benchmark Results",
         show_header=True,
         header_style="bold cyan",
     )

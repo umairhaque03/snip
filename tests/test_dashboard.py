@@ -14,8 +14,8 @@ from rich.console import Console
 from rich.layout import Layout
 from rich.table import Table
 
-from brainfog.dashboard import Dashboard, DashboardUpdate
-from brainfog.metrics import ToolCallMetric
+from snip.dashboard import Dashboard, DashboardUpdate
+from snip.metrics import ToolCallMetric
 
 # ---------------------------------------------------------------------------
 # Helpers

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from brainfog.tokenizer import count_tokens, tokens_saved
+from snip.tokenizer import count_tokens, tokens_saved
 
 
 def test_empty_string_returns_zero():

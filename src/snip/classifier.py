@@ -10,10 +10,11 @@ Classification is a pure function — no I/O, no state.
 from __future__ import annotations
 
 import re
+import shlex
 from dataclasses import dataclass
 from enum import Enum
 
-from brainfog.constants import (
+from snip.constants import (
     CODE_INDICATOR_PATTERNS,
     DURABLE_COMMANDS,
     DURABLE_MCP_TOOLS,
@@ -71,18 +72,20 @@ def classify(
     if result is not None:
         return result
 
+    effective_cmd = _extract_effective_command(command)
+
     # 2. Check known-Durable command prefixes
-    result = _classify_by_durable_command(command)
+    result = _classify_by_durable_command(effective_cmd)
     if result is not None:
         return result
 
     # 3. Check known-Volatile command prefixes
-    result = _classify_by_volatile_command(command)
+    result = _classify_by_volatile_command(effective_cmd)
     if result is not None:
         return result
 
     # 4. Check Volatile MCP tool names (e.g., Glob → directory_listing)
-    result = _classify_by_volatile_mcp_tool(tool_name, command)
+    result = _classify_by_volatile_mcp_tool(tool_name, effective_cmd)
     if result is not None:
         return result
 
@@ -103,6 +106,42 @@ def classify(
 # ---------------------------------------------------------------------------
 # Private helpers
 # ---------------------------------------------------------------------------
+
+_SHELL_PREFIXES_TO_STRIP = re.compile(
+    r"""
+    ^\s*
+    (?:
+        cd\s+\S+\s*&&\s*        |  # cd /some/path &&
+        pushd\s+\S+\s*&&\s*     |  # pushd /path &&
+        export\s+\S+=\S*\s*&&\s*|  # export FOO=bar &&
+        env\s+\S+=\S*\s+        |  # env VAR=val <cmd>
+        sudo\s+                     # sudo <cmd>
+    )
+    """,
+    re.VERBOSE,
+)
+
+
+def _extract_effective_command(command: str) -> str:
+    """
+    Strip shell wrappers (cd, sudo, env, pipes) to find the classifiable
+    command. For compound commands joined with ``&&``, use the **last**
+    segment since its output dominates stdout.
+    """
+    segments = re.split(r"\s*&&\s*", command)
+    effective = segments[-1].strip() if segments else command.strip()
+
+    effective = re.sub(r"\s*\d*>&\d+\s*", " ", effective)
+    effective = re.sub(r"\s*2>/dev/null\s*", " ", effective)
+
+    effective = _SHELL_PREFIXES_TO_STRIP.sub("", effective).strip()
+
+    pipe_idx = effective.find("|")
+    if pipe_idx != -1:
+        effective = effective[:pipe_idx].strip()
+
+    return effective
+
 
 def _classify_by_mcp_tool_name(tool_name: str) -> ClassificationResult | None:
     """Return Durable if tool_name is a known-Durable MCP tool."""

@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import pytest
 
-from brainfog.classifier import VolatilityClass, classify
+from snip.classifier import VolatilityClass, classify
 
 # ---------------------------------------------------------------------------
 # Durable classifications
@@ -127,7 +127,7 @@ def test_git_log_is_volatile_git_output():
 # ---------------------------------------------------------------------------
 
 def test_pip_install_is_volatile_install_log():
-    result = classify("Bash", "pip install brainfog", "Collecting brainfog\n" * 60)
+    result = classify("Bash", "pip install snip", "Collecting snip\n" * 60)
     assert result.volatility == VolatilityClass.VOLATILE
     assert result.category == "install_log"
 

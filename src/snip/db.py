@@ -4,7 +4,7 @@ SQLite storage layer for raw logs and session metrics.
 Uses the repository pattern — all database access goes through LogRepository.
 The schema is created on first use via initialize().
 
-Database location: ~/.brainfog/brainfog.db
+Database location: ~/.snip/snip.db
 """
 
 from __future__ import annotations
@@ -17,8 +17,8 @@ from pathlib import Path
 
 import aiosqlite
 
-from brainfog.constants import DB_RELATIVE_PATH, LOG_RETENTION_DAYS
-from brainfog.metrics import SessionStats
+from snip.constants import DB_RELATIVE_PATH, LOG_RETENTION_DAYS
+from snip.metrics import SessionStats
 
 # ---------------------------------------------------------------------------
 # Schema

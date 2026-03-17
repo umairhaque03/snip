@@ -18,8 +18,8 @@ import re
 from collections.abc import Callable
 from dataclasses import dataclass
 
-from brainfog.classifier import ClassificationResult, VolatilityClass
-from brainfog.constants import (
+from snip.classifier import ClassificationResult, VolatilityClass
+from snip.constants import (
     BRAINFOG_TAG,
     DIGEST_HEAD_LINES,
     DIGEST_TAIL_LINES,
@@ -32,7 +32,7 @@ from brainfog.constants import (
     PRUNE_LINE_THRESHOLD,
     RETRIEVAL_HINT_TEMPLATE,
 )
-from brainfog.tokenizer import count_tokens
+from snip.tokenizer import count_tokens
 
 # ---------------------------------------------------------------------------
 # Types

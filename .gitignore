@@ -21,11 +21,11 @@ env/
 *.env
 
 # Runtime app state should never be committed.
-.brainfog/
-**/.brainfog/
-brainfog.db
-brainfog.db-shm
-brainfog.db-wal
+.snip/
+**/.snip/
+snip.db
+snip.db-shm
+snip.db-wal
 
 *.db
 *.db-shm

@@ -1,9 +1,9 @@
 
-> brainfog@0.1.0 build
+> snip@0.1.0 build
 > tsc --noEmit && vite build
 
 vite v5.2.0 building for production...
 ✓ 23 modules transformed.
-dist/brainfog.js    42.31 kB │ gzip: 14.82 kB
-dist/brainfog.umd.cjs    28.14 kB │ gzip: 10.34 kB
+dist/snip.js    42.31 kB │ gzip: 14.82 kB
+dist/snip.umd.cjs    28.14 kB │ gzip: 10.34 kB
 ✓ built in 1.23s

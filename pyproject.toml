@@ -3,14 +3,14 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "brainfog"
+name = "snip"
 version = "0.1.0"
 description = "MCP server that reduces token bloat in agentic AI workflows"
 readme = "README.md"
-license = "MIT"
-requires-python = ">=3.10"
+license = {text = "MIT"}
+requires-python = ">=3.11"
 authors = [
-    { name = "BrainFog Contributors" },
+    { name = "snip Contributors" },
 ]
 keywords = ["mcp", "claude", "token-optimization", "ai-tools", "context-pruning"]
 classifiers = [
@@ -18,7 +18,6 @@ classifiers = [
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
@@ -42,33 +41,33 @@ dev = [
 ]
 
 [project.scripts]
-brainfog = "brainfog.cli:main"
+snip = "snip.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/brainfog/brainfog"
-Repository = "https://github.com/brainfog/brainfog"
-Issues = "https://github.com/brainfog/brainfog/issues"
+Homepage = "https://github.com/snip/snip"
+Repository = "https://github.com/snip/snip"
+Issues = "https://github.com/snip/snip/issues"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/brainfog"]
+packages = ["src/snip"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
 
 [tool.ruff]
-target-version = "py310"
+target-version = "py311"
 line-length = 100
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP", "B", "SIM"]
 
 [tool.mypy]
-python_version = "3.10"
+python_version = "3.11"
 strict = true
 
 [tool.coverage.run]
-source = ["src/brainfog"]
+source = ["src/snip"]
 
 [tool.coverage.report]
 fail_under = 80
