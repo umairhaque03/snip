@@ -1,6 +1,5 @@
 # snip
 
-[![PyPI version](https://img.shields.io/pypi/v/snip.svg)](https://pypi.org/project/snip/)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
@@ -52,7 +51,7 @@ Agent → snip_run(command) → Execute command
 **Step 1 — Install snip:**
 
 ```bash
-pip install snip
+pip install git+https://github.com/umairhaque03/snip.git
 ```
 
 **Step 2 — Register with Claude Code:**
