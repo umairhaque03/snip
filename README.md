@@ -189,6 +189,10 @@ See [`benchmark_results.md`](benchmark_results.md) for the full report.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, testing, and repository structure.
 
+## Privacy
+
+When you run `snip init`, an anonymous install event is logged. The only data sent is Python version and OS platform — no personally identifiable information is collected.
+
 ## License
 
 MIT

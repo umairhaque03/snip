@@ -40,6 +40,11 @@ Issues = "https://github.com/umairhaque03/snip/issues"
 [tool.hatch.build.targets.wheel]
 packages = ["src/snip"]
 
+# snip is not published to PyPI — install via:
+#   pip install git+https://github.com/umairhaque03/snip.git
+[tool.hatch.publish]
+repo = ""
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"

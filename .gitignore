@@ -37,3 +37,6 @@ snip.db-wal
 htmlcov/
 .coverage
 coverage.xml
+
+# Supabase CLI temp files
+supabase/.temp/

@@ -96,6 +96,10 @@ def init(config: Path | None, force: bool) -> None:
         )
     )
 
+    # Anonymous install telemetry (fire-and-forget, never blocks or errors)
+    from snip.telemetry import report_install
+    report_install()
+
 
 # ---------------------------------------------------------------------------
 # snip serve
