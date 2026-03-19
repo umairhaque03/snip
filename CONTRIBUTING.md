@@ -2,9 +2,6 @@
 
 ## Development
 
-> **End users:** install via `pip install git+https://github.com/umairhaque03/snip.git`
-> The package is not on PyPI — do not use `pip install snip`.
-
 ```bash
 # Clone and install in editable mode with dev dependencies
 git clone https://github.com/umairhaque03/snip
